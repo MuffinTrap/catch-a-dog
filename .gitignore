@@ -1,0 +1,11 @@
+
+
+# DOL & EFL files
+*.dol
+*.elf
+
+# Programmers notepad project
+*.pnproj
+
+# No build folder
+build/
