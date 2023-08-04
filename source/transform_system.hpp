@@ -22,6 +22,8 @@ public:
   glm::vec2 get_pos(Entity entity) const;
   void set_pos(Entity entity, glm::vec2 pos);
 
+  TransformComponent &get_ref(Entity entity) { return transforms.at(entity); }
+
 private:
   std::unordered_map<Entity, TransformComponent> transforms;
 };

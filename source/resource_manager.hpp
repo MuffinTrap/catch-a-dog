@@ -2,7 +2,9 @@
 
 #include <cstdint>
 #include <unordered_map>
+
 #include <grrlib.h>
+#undef R
 
 enum class TextureName : uint32_t
 {

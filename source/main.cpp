@@ -9,16 +9,20 @@
 // global scope with junk macros that break GLM's templates :E
 #include "glm/glm.hpp"
 
-#include <grrlib.h>
 #include <ogc/lwp_watchdog.h>
 #include <stdlib.h>
 #include <wiiuse/wpad.h>
 
-#include "resource_manager.hpp"
-#include "creature_system.hpp"
-#include "transform_system.hpp"
 #include "WiiMoteReader.hpp"
 #include "DebugPrinter.hpp"
+
+#include "creature_system.hpp"
+#include "transform_system.hpp"
+#include "game_manager.hpp"
+#include "resource_manager.hpp"
+
+#include <grrlib.h>
+#undef R
 
 #define GRRLIB_BLACK   0x000000FF
 #define GRRLIB_WHITE   0xFFFFFFFF
@@ -39,6 +43,7 @@ int main(int argc, char **argv) {
     ResourceManager resource_manager;
     TransformSystem transform_system;
     CreatureSystem creature_system;
+    GameManager game_manager(transform_system, creature_system, resource_manager);
 
     DebugPrinter debugPrinter;
     debugPrinter.Init();
@@ -51,6 +56,8 @@ int main(int argc, char **argv) {
     int dog_x = 480;
     int dog_y = 120;
     glm::vec2 crazy_dog_pos = glm::vec2(340, 120);
+
+    game_manager.init();
 
     // Loop forever
     while(1) {
@@ -67,6 +74,13 @@ int main(int argc, char **argv) {
       deltaTimeStart = gettime();
       double frame_time = (double)(deltaTimeStart) / (double)(TB_TIMER_CLOCK * 1000);
 
+      PointerState pointer_state {
+        wiimote_reader.GetCursorPosition(),
+        wiimote_reader.ButtonPress(WPAD_BUTTON_A)
+      };
+
+      game_manager.update(frame_time, deltaTime, pointer_state);
+
       dog_x -= 1;
       if (dog_x < 0){
         dog_x = 480;
@@ -74,9 +88,9 @@ int main(int argc, char **argv) {
 
       // time  is a long long * reserved for something internal, don't use it
       crazy_dog_pos = glm::vec2(
-                                340.f + glm::sin(frame_time * 6.f) * 40.f,
-                                120.f + glm::cos(frame_time * 8.f) * 80.f
-                                );
+        340.f + glm::sin(frame_time * 6.f) * 40.f,
+        120.f + glm::cos(frame_time * 8.f) * 80.f
+      );
 
       // ---------------------------------------------------------------------
       // Place your drawing code here
@@ -92,6 +106,7 @@ int main(int argc, char **argv) {
         dog_y = wiimote_reader.GetCursorPosition().y;
       }
 
+      game_manager.render();
 
       // Debug crosshair cursor
       wiimote_reader.DrawDebugCursor();
@@ -99,9 +114,7 @@ int main(int argc, char **argv) {
     }
     // Main loop ends
 
-
     debugPrinter.DeInit();
-
   } // End manager scope
 
   GRRLIB_Exit(); // Be a good boy, clear the memory allocated by GRRLIB
