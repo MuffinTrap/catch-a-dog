@@ -4,6 +4,11 @@
 
         Minimum Code To Use GRRLIB
 ============================================*/
+
+// GLM MUST BE INCLUDED BEFORE grrlib.h because GRRLIB pollutes
+// global scope with junk macros that break GLM's templates :E
+#include "glm/glm.hpp"
+
 #include <grrlib.h>
 
 #include <stdlib.h>
@@ -25,6 +30,8 @@ int main(int argc, char **argv) {
 
   int dog_x = 480;
 
+  glm::vec2 crazy_dog_pos = glm::vec2(340, 120);
+
   // Loop forever
   while(1) {
 
@@ -38,11 +45,14 @@ int main(int argc, char **argv) {
       dog_x = 480;
     }
 
+
+
     // ---------------------------------------------------------------------
     // Place your drawing code here
     // ---------------------------------------------------------------------
     GRRLIB_FillScreen(GRRLIB_BLACK);    // Clear the screen
     GRRLIB_DrawImg(dog_x, 50, test_dog_tex, 0, 1, 1, GRRLIB_WHITE);  // Draw doggo
+    GRRLIB_DrawImg((int)crazy_dog_pos.x, (int)crazy_dog_pos.y, test_dog_tex, 0, 1, 1, GRRLIB_WHITE);
 
     GRRLIB_Render();  // Render the frame buffer to the TV
   }
