@@ -2,6 +2,7 @@
 #include "WiiMoteReader.hpp"
 
 #include <grrlib.h>
+#undef R
 #include <stdlib.h>
 #include <wiiuse/wpad.h>
 
@@ -12,18 +13,18 @@ static const int screen_width = 640;
 static const int screen_height = 480;
 
 bool WiiMoteReader::ButtonPress(int buttonEnum) {
-  return (WPAD_ButtonsDown(WPAD_CHAN_0) & buttonEnum);
+  return (WPAD_ButtonsDown(0) & buttonEnum);
 }
 
 bool WiiMoteReader::ButtonRelease(int buttonEnum) {
-  return (WPAD_ButtonsUp(WPAD_CHAN_0) & buttonEnum);
+  return (WPAD_ButtonsUp(0) & buttonEnum);
 }
 
 bool WiiMoteReader::ButtonHeld(int buttonEnum) {
-  return (WPAD_ButtonsHeld(WPAD_CHAN_0) & buttonEnum);
+  return (WPAD_ButtonsHeld(0) & buttonEnum);
 }
 
-void WiiMoteReader::Init() {
+void WiiMoteReader::Init(DebugPrinter *printer) {
   WPAD_SetDataFormat(WPAD_CHAN_0, WPAD_FMT_BTNS_ACC_IR);
 
   cursor_x = screen_width / 2;
@@ -32,9 +33,16 @@ void WiiMoteReader::Init() {
   // Tested and found these values to be good
   correction_x = -125.0f;
   correction_y = -10.0f;
+
+  printerPtr = printer;
+}
+
+glm::vec2 WiiMoteReader::GetCursorPosition() {
+  return glm::vec2(cursor_x, cursor_y);
 }
 
 void WiiMoteReader::StartFrame() {
+  WPAD_ScanPads();  // Scan the Wiimotes
   ir_t ir;
   WPAD_IR(WPAD_CHAN_0, &ir);
 
@@ -87,14 +95,14 @@ void WiiMoteReader::StartFrame() {
 
 void WiiMoteReader::PrintWiiMoteStatus() {
   sprintf(ir_message, "Wiimote IR: X: %2.0f Y: %2.0f", ir_x, ir_y);
-  DebugPrinter::Print(ir_message);
+  printerPtr->Print(ir_message);
   sprintf(position_message, "Wiimote: X: %d Y: %d", cursor_x, cursor_y);
-  DebugPrinter::Print(position_message);
+  printerPtr->Print(position_message);
   sprintf(correction_message, "Correction X: %d Y: %d", (int)correction_x, (int)correction_y);
-  DebugPrinter::Print(correction_message);
+  printerPtr->Print(correction_message);
 }
 
-void WiiMoteReader::DrawCursor() {
+void WiiMoteReader::DrawDebugCursor() {
 
 
   GRRLIB_Line(cursor_x, 0, cursor_x, screen_height, GRRLIB_WHITE);

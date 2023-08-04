@@ -9,25 +9,16 @@
 struct GRRLIB_texImg;
 
 class DebugPrinter {
-
-private:
-  static DebugPrinter* singleton;
+public:
   GRRLIB_texImg *debug_font_tex;
-  void SInit();
-  void SDeInit();
-  void SPrint(const char* text);
   int font_width = 0;
   int font_height = 0;
   int line_number = 0;
   float message_scale = 0.5f;
-
-
-public:
-
-  static void Init();
-  static void Print(const char* text);
-  static void StartFrame();
-  static void DeInit();
+  void Init();
+  void StartFrame();
+  void Print(const char* text);
+  void DeInit();
 };
 
 

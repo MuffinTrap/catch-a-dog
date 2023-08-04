@@ -1,16 +1,22 @@
 #pragma once
 
+#include "glm/glm.hpp"
+
+class DebugPrinter;
+
 class WiiMoteReader {
 
 public:
-  void Init();
+  void Init(DebugPrinter *printer);
   void StartFrame();
   void PrintWiiMoteStatus();
-  void DrawCursor();
+  void DrawDebugCursor();
 
   bool ButtonPress(int buttonEnum);
   bool ButtonRelease(int buttonEnum);
   bool ButtonHeld(int buttonEnum);
+
+  glm::vec2 GetCursorPosition();
 
   char ir_message[60];
   char position_message[60];
@@ -24,5 +30,7 @@ public:
 
   float correction_x;
   float correction_y;
+
+  DebugPrinter *printerPtr;
 };
 
