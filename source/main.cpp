@@ -10,7 +10,7 @@
 #include "glm/glm.hpp"
 
 #include <grrlib.h>
-
+#include <ogc/lwp_watchdog.h>
 #include <stdlib.h>
 #include <wiiuse/wpad.h>
 
@@ -26,6 +26,10 @@ int main(int argc, char **argv) {
   // Initialise the Wiimotes
   WPAD_Init();
 
+  double deltaTime;
+  settime((uint64_t)0); //So we don't have to start with a huge number.
+  uint64_t deltaTimeStart = gettime();
+
   GRRLIB_texImg *test_dog_tex = GRRLIB_LoadTexture(test_dog_png);
 
   int dog_x = 480;
@@ -34,6 +38,9 @@ int main(int argc, char **argv) {
 
   // Loop forever
   while(1) {
+    deltaTime = (double)(gettime() - deltaTimeStart) / (double)(TB_TIMER_CLOCK * 1000); // division is to convert from ticks to seconds
+    deltaTimeStart = gettime();
+    double time = (double)(deltaTimeStart) / (double)(TB_TIMER_CLOCK * 1000);
 
     WPAD_ScanPads();  // Scan the Wiimotes
 
@@ -45,7 +52,10 @@ int main(int argc, char **argv) {
       dog_x = 480;
     }
 
-
+    crazy_dog_pos = glm::vec2(
+      340.f + glm::sin(time * 6.f) * 40.f,
+      120.f + glm::cos(time * 8.f) * 80.f
+    );
 
     // ---------------------------------------------------------------------
     // Place your drawing code here
