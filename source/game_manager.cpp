@@ -24,7 +24,7 @@ void GameManager::init() {
     this->transform_system.insert(ent);
     this->state->creatures.push_back(ent);
 
-    this->transform_system.set_pos(ent, glm::vec2(i * 10 + 140, i * 23 + 190));
+    this->transform_system.set_pos(ent, glm::vec2(rand() % 120 + i * 23 + 180, rand() % 120 + i * 32 + 32));
 
     CreatureComponent &creature = this->creature_system.get_ref(ent);
     creature.tex = TextureName::test_dog;
