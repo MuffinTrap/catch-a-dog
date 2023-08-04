@@ -14,7 +14,9 @@
 #include <stdlib.h>
 #include <wiiuse/wpad.h>
 
-#include "test_dog_png.h"
+#include "resource_manager.hpp"
+#include "creature_system.hpp"
+#include "transform_system.hpp"
 
 #define GRRLIB_BLACK   0x000000FF
 #define GRRLIB_WHITE   0xFFFFFFFF
@@ -30,11 +32,17 @@ int main(int argc, char **argv) {
   settime((uint64_t)0); //So we don't have to start with a huge number.
   uint64_t deltaTimeStart = gettime();
 
-  GRRLIB_texImg *test_dog_tex = GRRLIB_LoadTexture(test_dog_png);
+  ResourceManager resource_manager;
+  TransformSystem transform_system;
+  CreatureSystem creature_system;
+
+  GRRLIB_texImg *test_dog_tex = resource_manager.tex(TextureName::test_dog);
 
   int dog_x = 480;
 
   glm::vec2 crazy_dog_pos = glm::vec2(340, 120);
+
+
 
   // Loop forever
   while(1) {
@@ -67,7 +75,6 @@ int main(int argc, char **argv) {
     GRRLIB_Render();  // Render the frame buffer to the TV
   }
 
-  GRRLIB_FreeTexture(test_dog_tex);
   GRRLIB_Exit(); // Be a good boy, clear the memory allocated by GRRLIB
 
   exit(0);  // Use exit() to exit a program, do not use 'return' from main()
