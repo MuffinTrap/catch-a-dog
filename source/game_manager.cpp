@@ -31,34 +31,24 @@ void GameManager::init_pregame() {
 
   // Turorial dog
   {
-    Entity ent = new_entity();
-    creatures[ent] = CreatureComponent();
+    Entity ent = add_creature_from_definition(
+      creature_definition_pool[0]
+    );
+
     creatures[ent].excitement = 0.f;
+
     transforms[ent] = TransformComponent {
       .pos = glm::vec2(640/2 - 32, 480 - 480 / 4),
       .angle = 0.f
     };
-    renderables[ent] = RenderableComponent();
-    renderables[ent].frames = { TextureName::dog1_1, TextureName::dog1_2 };
-    renderables[ent].layer = RenderLayer_park;
   }
 }
 
 void GameManager::init_park() {
   for (int i = 0; i < 30; ++i) {
-    Entity ent = new_entity();
-    creatures[ent] = CreatureComponent();
-    creatures[ent].excitement = .5f;
-    creatures[ent].heading = glm::normalize(glm::vec2(rand() % 256 - 128, rand() % 256 - 128));
-
-    transforms[ent] = TransformComponent {
-      .pos = glm::vec2(rand() % 120 + 180, rand() % 120 + 180),
-      .angle = 0.f
-    };
-
-    renderables[ent] = RenderableComponent();
-    renderables[ent].frames = { TextureName::dog1_1, TextureName::dog1_2 };
-    renderables[ent].layer = RenderLayer_park;
+    add_creature_from_definition(
+      creature_definition_pool[rand() % creature_definition_pool.size()]
+    );
   }
 }
 
@@ -158,6 +148,26 @@ void GameManager::update(
       renderables.erase(state->logo_entity);
     }
   }
+}
+
+Entity GameManager::add_creature_from_definition(const CreatureDefinition &def) {
+  Entity ent = new_entity();
+
+  creatures[ent] = CreatureComponent();
+  creatures[ent].excitement = 1.f;
+  creatures[ent].heading = glm::normalize(glm::vec2(rand() % 256 - 128, rand() % 256 - 128));
+  creatures[ent].category = def.category;
+
+  transforms[ent] = TransformComponent {
+    .pos = glm::vec2(rand() % 120 + 180, rand() % 120 + 180),
+    .angle = 0.f
+  };
+
+  renderables[ent] = RenderableComponent();
+  renderables[ent].frames = def.frames;
+  renderables[ent].layer = RenderLayer_park;
+
+  return ent;
 }
 
 void GameManager::draw(TextureName tex_name, glm::vec2 pos, int scale_x, int scale_y) {

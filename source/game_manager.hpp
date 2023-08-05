@@ -8,6 +8,7 @@
 
 #include "resource_manager.hpp"
 #include "entity.hpp"
+#include "creature_definitions.hpp"
 
 const glm::vec2 creature_size = glm::vec2(64, 64);
 const glm::vec2 basket_size { 256, 256 };
@@ -58,6 +59,7 @@ struct TransformComponent {
 struct CreatureComponent {
   float excitement = 1.f;
   glm::vec2 heading;
+  CreatureCategory category = CreatureCategory::not_dog;
 };
 
 struct RenderableComponent {
@@ -86,6 +88,8 @@ public:
   void render(const PointerState &pointer_state);
 
 private:
+  Entity add_creature_from_definition(const CreatureDefinition &def);
+
   void draw(TextureName tex_name, glm::vec2 pos, int scale_x = 1, int scale_y = 1);
 
   std::unique_ptr<GameState> state;
