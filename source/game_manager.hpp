@@ -2,12 +2,12 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include "glm/glm.hpp"
 
+#include "resource_manager.hpp"
 #include "entity.hpp"
-#include "creature_system.hpp"
-#include "transform_system.hpp"
 
 struct PointerState {
   glm::vec2 pos;
@@ -20,18 +20,22 @@ struct GameState {
 
   glm::vec2 basket_pos { 64, 128 };
   glm::vec2 basket_extent { 64, 64 };
+};
 
-  std::vector<Entity> creatures;
+struct TransformComponent {
+  glm::vec2 pos;
+  float angle = 0.f;
+};
+
+struct CreatureComponent {
+  TextureName tex = TextureName::test_dog;
+  float excitement = 0.f;
 };
 
 // This is the thing that drives the whole game
 class GameManager {
 public:
-  GameManager(
-    TransformSystem &transform_system,
-    CreatureSystem &creature_system,
-    ResourceManager &resource_manager
-  );
+  GameManager(ResourceManager &resource_manager);
 
   void init();
 
@@ -45,8 +49,8 @@ public:
 
 private:
   std::unique_ptr<GameState> state;
+  std::unordered_map<Entity, TransformComponent> transforms;
+  std::unordered_map<Entity, CreatureComponent> creatures;
 
-  TransformSystem &transform_system;
-  CreatureSystem &creature_system;
   ResourceManager &resource_manager;
 };

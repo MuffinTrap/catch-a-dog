@@ -16,8 +16,6 @@
 #include "WiiMoteReader.hpp"
 #include "DebugPrinter.hpp"
 
-#include "creature_system.hpp"
-#include "transform_system.hpp"
 #include "game_manager.hpp"
 #include "resource_manager.hpp"
 
@@ -41,9 +39,7 @@ int main(int argc, char **argv) {
   // Manager scope
   {
     ResourceManager resource_manager;
-    TransformSystem transform_system;
-    CreatureSystem creature_system;
-    GameManager game_manager(transform_system, creature_system, resource_manager);
+    GameManager game_manager(resource_manager);
 
     DebugPrinter debugPrinter;
     debugPrinter.Init();
