@@ -17,15 +17,31 @@ GameManager::GameManager(
 }
 
 void GameManager::init_pregame() {
-  Entity ent = new_entity();
-  creatures[ent] = CreatureComponent();
-  transforms[ent] = TransformComponent {
-    .pos = glm::vec2(640/2 - 32, 480 / 3 - 32),
-    .angle = 0.f
-  };
-  renderables[ent] = RenderableComponent();
-  renderables[ent].frames = { TextureName::dog1_1, TextureName::dog1_2 };
-  renderables[ent].layer = RenderLayer_park;
+  // Logo
+  {
+    Entity ent = new_entity();
+    transforms[ent] = TransformComponent();
+    transforms[ent].pos = glm::vec2(640 / 2 - 128, 480 / 2 - 192);
+    renderables[ent] = RenderableComponent();
+    renderables[ent].frames = { TextureName::titlescreen_logo };
+    renderables[ent].layer = RenderLayer_menu;
+
+    state->logo_entity = ent;
+  }
+
+  // Turorial dog
+  {
+    Entity ent = new_entity();
+    creatures[ent] = CreatureComponent();
+    creatures[ent].excitement = 0.f;
+    transforms[ent] = TransformComponent {
+      .pos = glm::vec2(640/2 - 32, 480 - 480 / 4),
+      .angle = 0.f
+    };
+    renderables[ent] = RenderableComponent();
+    renderables[ent].frames = { TextureName::dog1_1, TextureName::dog1_2 };
+    renderables[ent].layer = RenderLayer_park;
+  }
 }
 
 void GameManager::init_park() {
@@ -96,6 +112,7 @@ void GameManager::update(
   // Move creatures
   for (auto creatures_pair : creatures) {
     Entity ent = creatures_pair.first;
+    CreatureComponent &creature = creatures[ent];
 
     if (state->holding_creature_entity == ent) {
       // Picked creature
@@ -104,7 +121,7 @@ void GameManager::update(
       // Stay still in basket
     } else {
       // Normal roaming creature
-      transforms[ent].pos += glm::vec2(glm::sin(time / 8.f), glm::cos(time / 7.f)) * 20.f * delta_time;
+      transforms[ent].pos += glm::vec2(glm::sin(time / 8.f), glm::cos(time / 7.f)) * 20.f * delta_time * creature.excitement;
     }
   }
 
@@ -113,6 +130,13 @@ void GameManager::update(
     if (state->basket_creatures.size() > 0) {
       init_park();
       state->phase = GamePhase::park;
+    }
+  }
+
+  if (state->phase == GamePhase::park) {
+    transforms[state->logo_entity].pos -= glm::vec2(0, 1) * 256.f * delta_time;
+    if (transforms[state->logo_entity].pos.y < -512.f) {
+      renderables.erase(state->logo_entity);
     }
   }
 }

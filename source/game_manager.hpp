@@ -23,7 +23,7 @@ struct PointerState {
 
 enum class GamePhase {
   intro,
-  park
+  park,
 };
 
 enum RenderLayers : uint8_t {
@@ -40,8 +40,7 @@ enum RenderLayers : uint8_t {
 struct GameState {
   GamePhase phase = GamePhase::intro;
 
-  bool logo_show = true;
-  glm::vec2 logo_pos { 640 / 2 - 128, 480 / 2 - 128 };
+  Entity logo_entity = 0;
 
   Entity holding_creature_entity = 0;
   std::vector<Entity> basket_creatures;
@@ -53,7 +52,7 @@ struct TransformComponent {
 };
 
 struct CreatureComponent {
-  float excitement = 0.f;
+  float excitement = 1.f;
   glm::vec2 heading;
 };
 
