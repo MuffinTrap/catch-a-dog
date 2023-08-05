@@ -11,7 +11,7 @@
 
 const glm::vec2 creature_size = glm::vec2(64, 64);
 const glm::vec2 basket_size { 128, 128 };
-const glm::vec2 basket_pos { 32, 480 - basket_size.y - 32 };
+const glm::vec2 basket_pos { 128, 480 - basket_size.y - 64 };
 
 struct PointerState {
   glm::vec2 pos;
@@ -24,6 +24,7 @@ struct GameState {
   glm::vec2 logo_pos { 640 / 2 - 128, 480 / 2 - 128 };
 
   Entity holding_creature_entity = 0;
+  std::vector<Entity> basket_creatures;
 };
 
 struct TransformComponent {
@@ -49,6 +50,8 @@ public:
     float delta_time,
     PointerState pointer_state
   );
+
+  bool is_in_basket(Entity entity) const;
 
   void render();
 

@@ -1,9 +1,12 @@
 #include "game_manager.hpp"
 
 #include <cstdlib>
+#include <algorithm>
 
 #include <grrlib.h>
 #undef R
+
+#include "util.hpp"
 
 
 GameManager::GameManager(
@@ -35,6 +38,14 @@ void GameManager::init_park() {
   }
 }
 
+bool GameManager::is_in_basket(Entity entity) const {
+  return std::find(
+      state->basket_creatures.begin(),
+      state->basket_creatures.end(),
+      entity)
+    != state->basket_creatures.end();
+}
+
 void GameManager::update(
   double time,
   float delta_time,
@@ -47,7 +58,13 @@ void GameManager::update(
     for (auto &creatures_pair : creatures) {
       Entity ent = creatures_pair.first;
 
-      if (glm::length((transforms[ent].pos + creature_size / 2.f) - pointer_state.pos) < creature_size.x / 2.f) {
+      if (is_in_basket(ent)) {
+        // Prevent picking from basket
+        continue;
+      }
+
+      if (point_in_box(pointer_state.pos, transforms[ent].pos, creature_size))
+      {
         state->holding_creature_entity = ent;
         break;
       }
@@ -58,6 +75,9 @@ void GameManager::update(
     // Let go of picked thing
 
     // if In basket
+    if (point_in_box(pointer_state.pos, basket_pos, basket_size)) {
+      state->basket_creatures.push_back(state->holding_creature_entity);
+    }
 
     // else On ground
 
@@ -68,12 +88,14 @@ void GameManager::update(
   for (auto creatures_pair : creatures) {
     Entity ent = creatures_pair.first;
 
-    if (state->holding_creature_entity != ent) {
-      // Normal roaming creature
-      transforms[ent].pos += glm::vec2(glm::sin(time / 8.f), glm::cos(time / 7.f)) * 20.f * delta_time;
-    } else {
+    if (state->holding_creature_entity == ent) {
       // Picked creature
       transforms[ent].pos = pointer_state.pos;
+    } else if (is_in_basket(ent)) {
+      // Stay still in basket
+    } else {
+      // Normal roaming creature
+      transforms[ent].pos += glm::vec2(glm::sin(time / 8.f), glm::cos(time / 7.f)) * 20.f * delta_time;
     }
   }
 }
