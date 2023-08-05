@@ -19,7 +19,14 @@ struct PointerState {
   bool action_pressed = false;
 };
 
+enum class GamePhase {
+  intro,
+  park
+};
+
 struct GameState {
+  GamePhase phase = GamePhase::intro;
+
   bool logo_show = true;
   glm::vec2 logo_pos { 640 / 2 - 128, 480 / 2 - 128 };
 

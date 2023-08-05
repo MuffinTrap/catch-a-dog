@@ -98,6 +98,14 @@ void GameManager::update(
       transforms[ent].pos += glm::vec2(glm::sin(time / 8.f), glm::cos(time / 7.f)) * 20.f * delta_time;
     }
   }
+
+  // Scan basket
+  if (state->phase == GamePhase::intro) {
+    if (state->basket_creatures.size() > 0) {
+      init_park();
+      state->phase = GamePhase::park;
+    }
+  }
 }
 
 void GameManager::render() {
