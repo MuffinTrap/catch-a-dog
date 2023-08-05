@@ -83,7 +83,7 @@ void GameManager::update(
     // Let go of picked thing
 
     // if In basket
-    if (point_in_box(pointer_state.pos, basket_pos, basket_size)) {
+    if (glm::length(pointer_state.pos - (basket_pos + basket_action_offset)) < basket_action_radius) {
       state->basket_creatures.push_back(state->holding_creature_entity);
       renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
     }
@@ -99,7 +99,7 @@ void GameManager::update(
 
     if (state->holding_creature_entity == ent) {
       // Picked creature
-      transforms[ent].pos = pointer_state.pos;
+      transforms[ent].pos = pointer_state.pos - glm::vec2(32, 16);
     } else if (is_in_basket(ent)) {
       // Stay still in basket
     } else {
@@ -172,4 +172,6 @@ void GameManager::render(const PointerState &pointer_state) {
   }
 
   draw(pointer_state.action_held ? TextureName::pointer_down : TextureName::pointer_open, pointer_state.pos - glm::vec2(32, 32));
+
+  GRRLIB_Rectangle(basket_pos.x, basket_pos.y, basket_size.x, basket_size.y, 0xFFFFFFFF, 0);
 }

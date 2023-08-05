@@ -12,6 +12,8 @@
 const glm::vec2 creature_size = glm::vec2(64, 64);
 const glm::vec2 basket_size { 256, 256 };
 const glm::vec2 basket_pos { 64, 480 - basket_size.y - 32 };
+const float basket_action_radius = 64.f;
+const glm::vec2 basket_action_offset = glm::vec2(basket_size.x / 2.f, basket_size.y / 2.f + 32.f);
 
 struct PointerState {
   glm::vec2 pos;
@@ -52,6 +54,7 @@ struct TransformComponent {
 
 struct CreatureComponent {
   float excitement = 0.f;
+  glm::vec2 heading;
 };
 
 struct RenderableComponent {
