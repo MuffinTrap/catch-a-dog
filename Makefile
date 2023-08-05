@@ -34,9 +34,9 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 # any extra libraries we wish to link with the project
 # the order can-be/is critical
 #---------------------------------------------------------------------------------
-LIBS	:= -lgrrlib -lfreetype -lbz2 -lpngu -lpng -ljpeg -lz -lfat
+LIBS	:= -lgrrlib -lgrrmod -lfreetype -lbz2 -lpngu -lpng -ljpeg -lz -lfat
 LIBS	+= -lwiiuse
-#LIBS	+= -lmodplay -laesnd
+LIBS	+= -lmodplay -laesnd
 LIBS	+= -lbte -logc -lm
 
 #---------------------------------------------------------------------------------
@@ -139,6 +139,17 @@ $(OFILES_SOURCES) : $(HFILES)
 # This rule links in binary data with the .png extension
 #---------------------------------------------------------------------------------
 %.png.o	:	%.png
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	$(bin2o)
+
+-include $(DEPENDS)
+
+#---------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+# This rule links in binary data with the .it extension
+#---------------------------------------------------------------------------------
+%.it.o	:	%.it
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)

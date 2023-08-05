@@ -22,6 +22,8 @@
 #include <grrlib.h>
 #undef R
 
+#include "MODPlayer.hpp"
+
 #define GRRLIB_BLACK   0x000000FF
 #define GRRLIB_WHITE   0xFFFFFFFF
 
@@ -47,12 +49,17 @@ int main(int argc, char **argv) {
     WiiMoteReader wiimote_reader;
     wiimote_reader.Init(&debugPrinter);
 
+    MODPlayer modplayer;
+    modplayer.Init(&debugPrinter);
+
     GRRLIB_texImg *test_dog_tex = resource_manager.tex(TextureName::test_dog);
 
     int dog_x = 480;
     int dog_y = 120;
 
     game_manager.init_pregame();
+
+    modplayer.StartPlaying(0);
 
     // Loop forever
     while(1) {
@@ -97,13 +104,17 @@ int main(int argc, char **argv) {
 
       game_manager.render();
 
+      modplayer.RenderDebugInfo();
       // Debug crosshair cursor
       wiimote_reader.DrawDebugCursor();
+
+      modplayer.EndFrame(deltaTime);
       GRRLIB_Render();  // Render the frame buffer to the TV
     }
     // Main loop ends
 
     debugPrinter.DeInit();
+    modplayer.DeInit();
   } // End manager scope
 
   GRRLIB_Exit(); // Be a good boy, clear the memory allocated by GRRLIB
