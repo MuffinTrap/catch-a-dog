@@ -109,6 +109,11 @@ void GameManager::update(
 }
 
 void GameManager::render() {
+
+  GRRLIB_texImg *tex_bg = resource_manager.tex(TextureName::background);
+  GRRLIB_DrawImg(0, 0, tex_bg, 0, 1, 1, 0xFFFFFFFF);
+
+
   for (auto creatures_pair : creatures) {
     const TransformComponent &trans = transforms.at(creatures_pair.first);
     const CreatureComponent &creature = creatures_pair.second;

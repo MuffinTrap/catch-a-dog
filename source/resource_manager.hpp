@@ -9,6 +9,14 @@
 enum class TextureName : uint32_t
 {
   test_dog,
+  test_cat,
+  pointer_open,
+  pointer_down,
+  titlescreen_logo,
+  background,
+  basket_back,
+  basket_front,
+  tree
 };
 
 class ResourceManager {
