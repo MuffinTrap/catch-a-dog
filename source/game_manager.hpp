@@ -59,6 +59,8 @@ struct CreatureComponent {
 struct RenderableComponent {
   std::vector<TextureName> frames;
   int layer = 0;
+  int scale_x = 1;
+  int scale_y = 1;
 };
 
 // This is the thing that drives the whole game
@@ -80,7 +82,7 @@ public:
   void render(const PointerState &pointer_state);
 
 private:
-  void draw(TextureName tex_name, glm::vec2 pos);
+  void draw(TextureName tex_name, glm::vec2 pos, int scale_x = 1, int scale_y = 1);
 
   std::unique_ptr<GameState> state;
   std::unordered_map<Entity, TransformComponent> transforms;

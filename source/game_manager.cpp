@@ -49,6 +49,7 @@ void GameManager::init_park() {
     Entity ent = new_entity();
     creatures[ent] = CreatureComponent();
     creatures[ent].excitement = .5f;
+    creatures[ent].heading = glm::normalize(glm::vec2(rand() % 256 - 128, rand() % 256 - 128));
 
     transforms[ent] = TransformComponent {
       .pos = glm::vec2(rand() % 120 + 180, rand() % 120 + 180),
@@ -121,7 +122,20 @@ void GameManager::update(
       // Stay still in basket
     } else {
       // Normal roaming creature
-      transforms[ent].pos += glm::vec2(glm::sin(time / 8.f), glm::cos(time / 7.f)) * 20.f * delta_time * creature.excitement;
+      transforms[ent].pos += creature.heading * 60.f * delta_time * creature.excitement;
+
+      if (transforms[ent].pos.x < 64 || transforms[ent].pos.x > 640 - 64) {
+        transforms[ent].pos.x = std::max(64.f, std::min(transforms[ent].pos.x, 640.f - 64.f));
+        creature.heading.x = -creature.heading.x;
+      }
+
+      if (transforms[ent].pos.y < 64 || transforms[ent].pos.y > 480 - 64) {
+        transforms[ent].pos.y = std::max(64.f, std::min(transforms[ent].pos.y, 480.f - 64.f));
+        creature.heading.y = -creature.heading.y;
+      }
+
+      // fffuuuuuuu.... texture anchor point changes when flipping.... argh...
+      //renderables[ent].scale_x = creature.heading.x < 0.f ? 1 : -1;
     }
   }
 
@@ -141,20 +155,22 @@ void GameManager::update(
   }
 }
 
-void GameManager::draw(TextureName tex_name, glm::vec2 pos) {
+void GameManager::draw(TextureName tex_name, glm::vec2 pos, int scale_x, int scale_y) {
   GRRLIB_texImg *tex = resource_manager.tex(tex_name);
-  GRRLIB_DrawImg(pos.x, pos.y, tex, 0, 1, 1, 0xFFFFFFFF);
+  GRRLIB_DrawImg(pos.x, pos.y, tex, 0, scale_x, scale_y, 0xFFFFFFFF);
 }
 
-struct RenderEnqueuedTex {
+struct RenderCommand {
   TextureName tex_name;
   glm::vec2 pos;
   int layer = 0;
   float layer_sort_value = 0.f;
+  int scale_x = 1;
+  int scale_y = 1;
 };
 
 void GameManager::render(const PointerState &pointer_state) {
-  static std::vector<RenderEnqueuedTex> render_queue;
+  static std::vector<RenderCommand> render_queue;
   render_queue.reserve(256);
   render_queue.clear();
 
@@ -162,37 +178,43 @@ void GameManager::render(const PointerState &pointer_state) {
     const TransformComponent &trans = transforms.at(renderables_pair.first);
     const RenderableComponent &renderable = renderables_pair.second;
 
-    render_queue.push_back(RenderEnqueuedTex {
+    render_queue.push_back(RenderCommand {
       .tex_name = renderable.frames[rand() % renderable.frames.size()],
       .pos = trans.pos,
       .layer = renderable.layer,
-      .layer_sort_value = trans.pos.y - 64.f // TODO piiskaa pitäisi antaa
+      .layer_sort_value = trans.pos.y - 64.f, // TODO piiskaa pitäisi antaa
+      .scale_x = renderable.scale_x,
+      .scale_y = renderable.scale_y,
     });
   }
 
-  std::sort(render_queue.begin(), render_queue.end(), [&](const RenderEnqueuedTex &a, const RenderEnqueuedTex &b){
-    auto score = [&](const RenderEnqueuedTex &c) -> float { return c.layer * 1000.f + c.layer_sort_value; };
+  std::sort(render_queue.begin(), render_queue.end(), [&](const RenderCommand &a, const RenderCommand &b){
+    auto score = [&](const RenderCommand &c) -> float { return c.layer * 1000.f + c.layer_sort_value; };
     return score(a) < score(b);
   });
+
+  auto draw_command = [&](const RenderCommand &cmd) {
+    draw(cmd.tex_name, cmd.pos, cmd.scale_x, cmd.scale_y);
+  };
 
   size_t ri = 0;
 
   draw(TextureName::background, glm::vec2(0,0));
 
   for (;render_queue[ri].layer <= RenderLayer_park && ri < render_queue.size(); ++ri) {
-    draw(render_queue[ri].tex_name, render_queue[ri].pos);
+    draw_command(render_queue[ri]);
   }
 
   draw(TextureName::basket_back, basket_pos);
 
   for (;render_queue[ri].layer <= RenderLayer_basket_in && ri < render_queue.size(); ++ri) {
-    draw(render_queue[ri].tex_name, render_queue[ri].pos);
+    draw_command(render_queue[ri]);
   }
 
   draw(TextureName::basket_front, basket_pos + glm::vec2(0, basket_size.y / 2.f));
 
   for (; ri < render_queue.size(); ++ri) {
-    draw(render_queue[ri].tex_name, render_queue[ri].pos);
+    draw_command(render_queue[ri]);
   }
 
   draw(pointer_state.action_held ? TextureName::pointer_down : TextureName::pointer_open, pointer_state.pos - glm::vec2(32, 32));
