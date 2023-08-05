@@ -102,11 +102,11 @@ int main(int argc, char **argv) {
         dog_y = wiimote_reader.GetCursorPosition().y;
       }
 
-      game_manager.render();
+      game_manager.render(pointer_state);
 
-      modplayer.RenderDebugInfo();
+      //modplayer.RenderDebugInfo();
       // Debug crosshair cursor
-      wiimote_reader.DrawDebugCursor();
+      //wiimote_reader.DrawDebugCursor();
 
       modplayer.EndFrame(deltaTime);
       GRRLIB_Render();  // Render the frame buffer to the TV

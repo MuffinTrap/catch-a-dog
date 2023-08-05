@@ -70,12 +70,12 @@ public:
   void update(
     double time,
     float delta_time,
-    PointerState pointer_state
+    const PointerState &pointer_state
   );
 
   bool is_in_basket(Entity entity) const;
 
-  void render();
+  void render(const PointerState &pointer_state);
 
 private:
   void draw(TextureName tex_name, glm::vec2 pos);

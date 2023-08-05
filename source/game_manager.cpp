@@ -56,7 +56,7 @@ bool GameManager::is_in_basket(Entity entity) const {
 void GameManager::update(
   double time,
   float delta_time,
-  PointerState pointer_state
+  const PointerState &pointer_state
 ) {
 
   if (pointer_state.action_pressed && state->holding_creature_entity == 0) {
@@ -129,7 +129,7 @@ struct RenderEnqueuedTex {
   float layer_sort_value = 0.f;
 };
 
-void GameManager::render() {
+void GameManager::render(const PointerState &pointer_state) {
   static std::vector<RenderEnqueuedTex> render_queue;
   render_queue.reserve(256);
   render_queue.clear();
@@ -170,4 +170,6 @@ void GameManager::render() {
   for (; ri < render_queue.size(); ++ri) {
     draw(render_queue[ri].tex_name, render_queue[ri].pos);
   }
+
+  draw(pointer_state.action_held ? TextureName::pointer_down : TextureName::pointer_open, pointer_state.pos - glm::vec2(32, 32));
 }
