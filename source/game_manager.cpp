@@ -119,13 +119,13 @@ void GameManager::update(
       // Normal roaming creature
       transforms[ent].pos += creature.heading * 60.f * delta_time * creature.excitement;
 
-      if (transforms[ent].pos.x < 64 || transforms[ent].pos.x > 640 - 64) {
-        transforms[ent].pos.x = std::max(64.f, std::min(transforms[ent].pos.x, 640.f - 64.f));
+      if (transforms[ent].pos.x < 64 || transforms[ent].pos.x > 640 - 128) {
+        transforms[ent].pos.x = std::max(64.f, std::min(transforms[ent].pos.x, 640.f - 128.f));
         creature.heading.x = -creature.heading.x;
       }
 
-      if (transforms[ent].pos.y < 64 || transforms[ent].pos.y > 480 - 64) {
-        transforms[ent].pos.y = std::max(64.f, std::min(transforms[ent].pos.y, 480.f - 64.f));
+      if (transforms[ent].pos.y < 16 || transforms[ent].pos.y > 480 - 128) {
+        transforms[ent].pos.y = std::max(16.f, std::min(transforms[ent].pos.y, 480.f - 128.f));
         creature.heading.y = -creature.heading.y;
       }
 
@@ -234,5 +234,5 @@ void GameManager::render(const PointerState &pointer_state) {
 
   draw(pointer_state.action_held ? TextureName::pointer_down : TextureName::pointer_open, pointer_state.pos - glm::vec2(32, 32));
 
-  GRRLIB_Rectangle(basket_pos.x, basket_pos.y, basket_size.x, basket_size.y, 0xFFFFFFFF, 0);
+  //GRRLIB_Rectangle(basket_pos.x, basket_pos.y, basket_size.x, basket_size.y, 0xFFFFFFFF, 0);
 }
