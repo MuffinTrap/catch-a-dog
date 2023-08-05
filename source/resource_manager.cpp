@@ -9,6 +9,8 @@
 #include "basket_back_png.h"
 #include "basket_front_png.h"
 #include "tree_png.h"
+#include "dog1_1_png.h"
+#include "dog1_2_png.h"
 
 typedef const uint8_t * TextureData;
 
@@ -22,6 +24,8 @@ static std::unordered_map<TextureName, TextureData> texture_data_map {
   { TextureName::basket_back,       basket_back_png },
   { TextureName::basket_front,      basket_front_png },
   { TextureName::tree,              tree_png },
+  { TextureName::dog1_1,            dog1_1_png },
+  { TextureName::dog1_2,            dog1_2_png },
 };
 
 ResourceManager::~ResourceManager() {

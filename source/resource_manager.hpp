@@ -16,7 +16,10 @@ enum class TextureName : uint32_t
   background,
   basket_back,
   basket_front,
-  tree
+  tree,
+
+  dog1_1,
+  dog1_2,
 };
 
 class ResourceManager {

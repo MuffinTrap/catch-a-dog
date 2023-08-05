@@ -10,8 +10,8 @@
 #include "entity.hpp"
 
 const glm::vec2 creature_size = glm::vec2(64, 64);
-const glm::vec2 basket_size { 128, 128 };
-const glm::vec2 basket_pos { 128, 480 - basket_size.y - 64 };
+const glm::vec2 basket_size { 256, 256 };
+const glm::vec2 basket_pos { 64, 480 - basket_size.y - 32 };
 
 struct PointerState {
   glm::vec2 pos;
@@ -22,6 +22,17 @@ struct PointerState {
 enum class GamePhase {
   intro,
   park
+};
+
+enum RenderLayers : uint8_t {
+  RenderLayer_bg = 0,
+  RenderLayer_park = 10,
+  RenderLayer_basket_bg = 20,
+  RenderLayer_basket_in = 25,
+  RenderLayer_picked = 30,
+  RenderLayer_basket_fg = 40,
+  RenderLayer_menu = 50,
+  RenderLayer_pointer = 60
 };
 
 struct GameState {
@@ -40,8 +51,12 @@ struct TransformComponent {
 };
 
 struct CreatureComponent {
-  TextureName tex = TextureName::test_dog;
   float excitement = 0.f;
+};
+
+struct RenderableComponent {
+  std::vector<TextureName> frames;
+  int layer = 0;
 };
 
 // This is the thing that drives the whole game
@@ -63,9 +78,12 @@ public:
   void render();
 
 private:
+  void draw(TextureName tex_name, glm::vec2 pos);
+
   std::unique_ptr<GameState> state;
   std::unordered_map<Entity, TransformComponent> transforms;
   std::unordered_map<Entity, CreatureComponent> creatures;
+  std::unordered_map<Entity, RenderableComponent> renderables;
 
   ResourceManager &resource_manager;
 };

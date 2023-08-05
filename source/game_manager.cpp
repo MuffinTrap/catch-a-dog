@@ -23,6 +23,9 @@ void GameManager::init_pregame() {
     .pos = glm::vec2(640/2 - 32, 480 / 3 - 32),
     .angle = 0.f
   };
+  renderables[ent] = RenderableComponent();
+  renderables[ent].frames = { TextureName::dog1_1, TextureName::dog1_2 };
+  renderables[ent].layer = RenderLayer_park;
 }
 
 void GameManager::init_park() {
@@ -35,6 +38,10 @@ void GameManager::init_park() {
       .pos = glm::vec2(rand() % 120 + 180, rand() % 120 + 180),
       .angle = 0.f
     };
+
+    renderables[ent] = RenderableComponent();
+    renderables[ent].frames = { TextureName::dog1_1, TextureName::dog1_2 };
+    renderables[ent].layer = RenderLayer_park;
   }
 }
 
@@ -66,6 +73,7 @@ void GameManager::update(
       if (point_in_box(pointer_state.pos, transforms[ent].pos, creature_size))
       {
         state->holding_creature_entity = ent;
+        renderables[ent].layer = RenderLayer_picked;
         break;
       }
     }
@@ -77,10 +85,11 @@ void GameManager::update(
     // if In basket
     if (point_in_box(pointer_state.pos, basket_pos, basket_size)) {
       state->basket_creatures.push_back(state->holding_creature_entity);
+      renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
     }
 
     // else On ground
-
+    renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
     state->holding_creature_entity = 0;
   }
 
@@ -108,18 +117,57 @@ void GameManager::update(
   }
 }
 
+void GameManager::draw(TextureName tex_name, glm::vec2 pos) {
+  GRRLIB_texImg *tex = resource_manager.tex(tex_name);
+  GRRLIB_DrawImg(pos.x, pos.y, tex, 0, 1, 1, 0xFFFFFFFF);
+}
+
+struct RenderEnqueuedTex {
+  TextureName tex_name;
+  glm::vec2 pos;
+  int layer = 0;
+  float layer_sort_value = 0.f;
+};
+
 void GameManager::render() {
+  static std::vector<RenderEnqueuedTex> render_queue;
+  render_queue.reserve(256);
+  render_queue.clear();
 
-  GRRLIB_texImg *tex_bg = resource_manager.tex(TextureName::background);
-  GRRLIB_DrawImg(0, 0, tex_bg, 0, 1, 1, 0xFFFFFFFF);
+  for (auto renderables_pair : renderables) {
+    const TransformComponent &trans = transforms.at(renderables_pair.first);
+    const RenderableComponent &renderable = renderables_pair.second;
 
+    render_queue.push_back(RenderEnqueuedTex {
+      .tex_name = renderable.frames[rand() % renderable.frames.size()],
+      .pos = trans.pos,
+      .layer = renderable.layer,
+      .layer_sort_value = trans.pos.y - 64.f // TODO piiskaa pitäisi antaa
+    });
+  }
 
-  for (auto creatures_pair : creatures) {
-    const TransformComponent &trans = transforms.at(creatures_pair.first);
-    const CreatureComponent &creature = creatures_pair.second;
+  std::sort(render_queue.begin(), render_queue.end(), [&](const RenderEnqueuedTex &a, const RenderEnqueuedTex &b){
+    auto score = [&](const RenderEnqueuedTex &c) -> float { return c.layer * 1000.f + c.layer_sort_value; };
+    return score(a) < score(b);
+  });
 
-    GRRLIB_texImg *tex = resource_manager.tex(creature.tex);
+  size_t ri = 0;
 
-    GRRLIB_DrawImg((int)trans.pos.x, (int)trans.pos.y, tex, 0, 1, 1, 0xFFFFFFFF);
+  draw(TextureName::background, glm::vec2(0,0));
+
+  for (;render_queue[ri].layer <= RenderLayer_park && ri < render_queue.size(); ++ri) {
+    draw(render_queue[ri].tex_name, render_queue[ri].pos);
+  }
+
+  draw(TextureName::basket_back, basket_pos);
+
+  for (;render_queue[ri].layer <= RenderLayer_basket_in && ri < render_queue.size(); ++ri) {
+    draw(render_queue[ri].tex_name, render_queue[ri].pos);
+  }
+
+  draw(TextureName::basket_front, basket_pos + glm::vec2(0, basket_size.y / 2.f));
+
+  for (; ri < render_queue.size(); ++ri) {
+    draw(render_queue[ri].tex_name, render_queue[ri].pos);
   }
 }
