@@ -16,6 +16,7 @@ const glm::vec2 basket_pos { 32, 480 - basket_size.y - 32 };
 struct PointerState {
   glm::vec2 pos;
   bool action_held = false;
+  bool action_pressed = false;
 };
 
 struct GameState {

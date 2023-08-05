@@ -71,7 +71,8 @@ int main(int argc, char **argv) {
 
       PointerState pointer_state {
         wiimote_reader.GetCursorPosition(),
-        wiimote_reader.ButtonHeld(WPAD_BUTTON_A)
+        wiimote_reader.ButtonHeld(WPAD_BUTTON_A),
+        wiimote_reader.ButtonPress(WPAD_BUTTON_A),
       };
 
       game_manager.update(frame_time, (float)deltaTime, pointer_state);

@@ -41,7 +41,7 @@ void GameManager::update(
   PointerState pointer_state
 ) {
 
-  if (pointer_state.action_held && state->holding_creature_entity == 0) {
+  if (pointer_state.action_pressed && state->holding_creature_entity == 0) {
     // Try to pick up something new
 
     for (auto &creatures_pair : creatures) {
