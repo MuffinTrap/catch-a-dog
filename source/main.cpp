@@ -51,9 +51,8 @@ int main(int argc, char **argv) {
 
     int dog_x = 480;
     int dog_y = 120;
-    glm::vec2 crazy_dog_pos = glm::vec2(340, 120);
 
-    game_manager.init();
+    game_manager.init_pregame();
 
     // Loop forever
     while(1) {
@@ -72,28 +71,21 @@ int main(int argc, char **argv) {
 
       PointerState pointer_state {
         wiimote_reader.GetCursorPosition(),
-        wiimote_reader.ButtonPress(WPAD_BUTTON_A)
+        wiimote_reader.ButtonHeld(WPAD_BUTTON_A)
       };
 
-      game_manager.update(frame_time, deltaTime, pointer_state);
+      game_manager.update(frame_time, (float)deltaTime, pointer_state);
 
       dog_x -= 1;
       if (dog_x < 0){
         dog_x = 480;
       }
 
-      // time  is a long long * reserved for something internal, don't use it
-      crazy_dog_pos = glm::vec2(
-        340.f + glm::sin(frame_time * 6.f) * 40.f,
-        120.f + glm::cos(frame_time * 8.f) * 80.f
-      );
-
       // ---------------------------------------------------------------------
       // Place your drawing code here
       // ---------------------------------------------------------------------
       GRRLIB_FillScreen(GRRLIB_BLACK);    // Clear the screen
       GRRLIB_DrawImg(dog_x, dog_y, test_dog_tex, 0, 1, 1, GRRLIB_WHITE);  // Draw doggo
-      GRRLIB_DrawImg((int)crazy_dog_pos.x, (int)crazy_dog_pos.y, test_dog_tex, 0, 1, 1, GRRLIB_WHITE);
 
       debugPrinter.Print("testing");
 

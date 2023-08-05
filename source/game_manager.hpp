@@ -9,6 +9,10 @@
 #include "resource_manager.hpp"
 #include "entity.hpp"
 
+const glm::vec2 creature_size = glm::vec2(64, 64);
+const glm::vec2 basket_size { 128, 128 };
+const glm::vec2 basket_pos { 32, 480 - basket_size.y - 32 };
+
 struct PointerState {
   glm::vec2 pos;
   bool action_held = false;
@@ -18,8 +22,7 @@ struct GameState {
   bool logo_show = true;
   glm::vec2 logo_pos { 640 / 2 - 128, 480 / 2 - 128 };
 
-  glm::vec2 basket_pos { 64, 128 };
-  glm::vec2 basket_extent { 64, 64 };
+  Entity holding_creature_entity = 0;
 };
 
 struct TransformComponent {
@@ -37,11 +40,12 @@ class GameManager {
 public:
   GameManager(ResourceManager &resource_manager);
 
-  void init();
+  void init_pregame();
+  void init_park();
 
   void update(
     double time,
-    double delta_time,
+    float delta_time,
     PointerState pointer_state
   );
 
