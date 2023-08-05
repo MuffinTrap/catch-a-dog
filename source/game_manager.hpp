@@ -14,6 +14,7 @@ const glm::vec2 basket_size { 256, 256 };
 const glm::vec2 basket_pos { 64, 480 - basket_size.y - 32 };
 const float basket_action_radius = 64.f;
 const glm::vec2 basket_action_offset = glm::vec2(basket_size.x / 2.f, basket_size.y / 2.f + 32.f);
+const float anim_frame_interval = 0.25f;
 
 struct PointerState {
   glm::vec2 pos;
@@ -44,6 +45,9 @@ struct GameState {
 
   Entity holding_creature_entity = 0;
   std::vector<Entity> basket_creatures;
+
+  size_t anim_frame_counter = 0;
+  double anim_frame_last = 0.f;
 };
 
 struct TransformComponent {

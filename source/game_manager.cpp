@@ -75,6 +75,11 @@ void GameManager::update(
   float delta_time,
   const PointerState &pointer_state
 ) {
+  if (state->anim_frame_last + anim_frame_interval < time)
+  {
+    state->anim_frame_counter++;
+    state->anim_frame_last = time;
+  }
 
   if (pointer_state.action_pressed && state->holding_creature_entity == 0) {
     // Try to pick up something new
@@ -179,7 +184,7 @@ void GameManager::render(const PointerState &pointer_state) {
     const RenderableComponent &renderable = renderables_pair.second;
 
     render_queue.push_back(RenderCommand {
-      .tex_name = renderable.frames[rand() % renderable.frames.size()],
+      .tex_name = renderable.frames[state->anim_frame_counter % renderable.frames.size()],
       .pos = trans.pos,
       .layer = renderable.layer,
       .layer_sort_value = trans.pos.y - 64.f, // TODO piiskaa pitäisi antaa
