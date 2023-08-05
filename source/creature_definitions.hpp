@@ -91,6 +91,7 @@ const std::vector<CreatureDefinition> creature_definition_pool = {
     },
     .category = CreatureCategory::not_dog,
   },
+  /*
   {
     .frames = {
       TextureName::oldschooldog1_1,
@@ -112,6 +113,7 @@ const std::vector<CreatureDefinition> creature_definition_pool = {
     },
     .category = CreatureCategory::dog,
   },
+  */
   {
     .frames = {
       TextureName::ropedog1_1,
