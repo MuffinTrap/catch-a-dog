@@ -6,6 +6,7 @@
 
 #include "glm/glm.hpp"
 
+#include "DebugPrinter.hpp"
 #include "resource_manager.hpp"
 #include "entity.hpp"
 #include "creature_definitions.hpp"
@@ -26,6 +27,7 @@ struct PointerState {
 enum class GamePhase {
   intro,
   park,
+  end,
 };
 
 enum RenderLayers : uint8_t {
@@ -49,6 +51,10 @@ struct GameState {
 
   size_t anim_frame_counter = 0;
   double anim_frame_last = 0.f;
+
+  int spawned_dogs_count = 0;
+  int collected_dogs = 0;
+  int collected_nondogs = 0;
 };
 
 struct TransformComponent {
@@ -72,10 +78,11 @@ struct RenderableComponent {
 // This is the thing that drives the whole game
 class GameManager {
 public:
-  GameManager(ResourceManager &resource_manager);
+  GameManager(ResourceManager &resource_manager, DebugPrinter &debug_printer);
 
   void init_pregame();
   void init_park();
+  void init_end();
 
   void update(
     double time,
@@ -98,4 +105,5 @@ private:
   std::unordered_map<Entity, RenderableComponent> renderables;
 
   ResourceManager &resource_manager;
+  DebugPrinter &debug_printer;
 };

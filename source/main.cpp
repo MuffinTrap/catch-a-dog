@@ -41,7 +41,6 @@ int main(int argc, char **argv) {
   // Manager scope
   {
     ResourceManager resource_manager;
-    GameManager game_manager(resource_manager);
 
     DebugPrinter debugPrinter;
     debugPrinter.Init();
@@ -51,6 +50,8 @@ int main(int argc, char **argv) {
 
     MODPlayer modplayer;
     modplayer.Init(&debugPrinter);
+
+    GameManager game_manager(resource_manager, debugPrinter);
 
     GRRLIB_texImg *test_dog_tex = resource_manager.tex(TextureName::test_dog);
 
@@ -95,7 +96,6 @@ int main(int argc, char **argv) {
       GRRLIB_FillScreen(GRRLIB_BLACK);    // Clear the screen
       GRRLIB_DrawImg(dog_x, dog_y, test_dog_tex, 0, 1, 1, GRRLIB_WHITE);  // Draw doggo
 
-      debugPrinter.Print("testing");
 
       if (wiimote_reader.ButtonPress(WPAD_BUTTON_A)) {
         dog_x = wiimote_reader.GetCursorPosition().x;
@@ -103,6 +103,8 @@ int main(int argc, char **argv) {
       }
 
       game_manager.render(pointer_state);
+
+      //debugPrinter.Print("testing");
 
       //modplayer.RenderDebugInfo();
       // Debug crosshair cursor

@@ -1,6 +1,7 @@
 #include "game_manager.hpp"
 
 #include <cstdlib>
+#include <stdio.h>
 #include <algorithm>
 
 #include <grrlib.h>
@@ -10,8 +11,10 @@
 
 
 GameManager::GameManager(
-  ResourceManager &resource_manager
-) : resource_manager(resource_manager)
+  ResourceManager &resource_manager,
+  DebugPrinter &debug_printer
+) : resource_manager(resource_manager),
+  debug_printer(debug_printer)
 {
   state.reset(new GameState());
 }
@@ -49,6 +52,26 @@ void GameManager::init_park() {
     add_creature_from_definition(
       creature_definition_pool[rand() % creature_definition_pool.size()]
     );
+  }
+}
+
+void GameManager::init_end() {
+  transforms[state->logo_entity].pos.y = 32;
+
+  std::vector<Entity> remove;
+  for (auto creatures_pair : creatures) {
+    Entity ent = creatures_pair.first;
+
+    if (!is_in_basket(ent)) {
+      remove.push_back(ent);
+    }
+  }
+
+  for (auto ent : remove)
+  {
+    creatures.erase(ent);
+    renderables.erase(ent);
+    transforms.erase(ent);
   }
 }
 
@@ -98,6 +121,13 @@ void GameManager::update(
     if (glm::length(pointer_state.pos - (basket_pos + basket_action_offset)) < basket_action_radius) {
       state->basket_creatures.push_back(state->holding_creature_entity);
       renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
+
+      const CreatureComponent &creature = creatures[state->holding_creature_entity];
+      if (creature.category == CreatureCategory::dog)
+        ++state->collected_dogs;
+
+      if (creature.category == CreatureCategory::not_dog)
+        ++state->collected_nondogs;
     }
 
     // else On ground
@@ -144,9 +174,15 @@ void GameManager::update(
 
   if (state->phase == GamePhase::park) {
     transforms[state->logo_entity].pos -= glm::vec2(0, 1) * 256.f * delta_time;
-    if (transforms[state->logo_entity].pos.y < -512.f) {
-      renderables.erase(state->logo_entity);
+    transforms[state->logo_entity].pos.y = std::max(-512.f, transforms[state->logo_entity].pos.y);
+
+    if (state->collected_dogs == state->spawned_dogs_count) {
+      init_end();
     }
+  }
+
+  if (state->phase == GamePhase::end) {
+
   }
 }
 
@@ -166,6 +202,9 @@ Entity GameManager::add_creature_from_definition(const CreatureDefinition &def) 
   renderables[ent] = RenderableComponent();
   renderables[ent].frames = def.frames;
   renderables[ent].layer = RenderLayer_park;
+
+  if (def.category == CreatureCategory::dog)
+    ++state->spawned_dogs_count;
 
   return ent;
 }
@@ -235,4 +274,8 @@ void GameManager::render(const PointerState &pointer_state) {
   draw(pointer_state.action_held ? TextureName::pointer_down : TextureName::pointer_open, pointer_state.pos - glm::vec2(32, 32));
 
   //GRRLIB_Rectangle(basket_pos.x, basket_pos.y, basket_size.x, basket_size.y, 0xFFFFFFFF, 0);
+
+  char score_str[64] = {0};
+  sprintf(score_str, "spawned: %i, dogs: %i, not dogs: %i", state->spawned_dogs_count, state->collected_dogs, state->collected_nondogs );
+  debug_printer.Print(score_str);
 }
