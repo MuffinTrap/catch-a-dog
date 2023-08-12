@@ -48,11 +48,43 @@ void GameManager::init_pregame() {
 }
 
 void GameManager::init_park() {
-  for (int i = 0; i < 30; ++i) {
+  for (int i = 0; i < state->park_creature_amount; ++i) {
     add_creature_from_definition(
       creature_definition_pool[rand() % creature_definition_pool.size()]
     );
+    state->basket_creatures[i] = 0;
   }
+
+  // Clear targets
+  for (int i = 0; i < state->target_creature_amount; ++i) {
+    state->target_creatures[i] = 0;
+  }
+  int targets_done = 0;
+
+  // Randomize targets
+  do
+  {
+    int creature_index = rand() % creatures.size();
+    if (creatures[creature_index].category != CreatureCategory::dog) {
+      continue;
+    }
+
+    std::unordered_map<Entity, CreatureComponent>::iterator it = creatures.begin();
+    std::advance(it, creature_index);
+    Entity random_entity = it->first;
+    bool is_new = true;
+    for (int i = 0; i < state->target_creature_amount; i++) {
+      if (state->target_creatures[i] == random_entity) {
+        is_new = false;
+        break;
+      }
+    }
+
+    if (is_new) {
+      state->target_creatures[targets_done] = random_entity;
+      targets_done++;
+    }
+  } while (targets_done < state->target_creature_amount);
 }
 
 void GameManager::init_end() {
@@ -73,14 +105,81 @@ void GameManager::init_end() {
     renderables.erase(ent);
     transforms.erase(ent);
   }
+
+  state->phase = GamePhase::end;
+}
+
+void GameManager::put_in_basket(Entity entity) {
+  for (int i = 0; i < state->park_creature_amount; i++) {
+    if (state->basket_creatures[i] == 0) {
+      state->basket_creatures[i] = entity;
+      break;
+    }
+  }
+}
+
+int GameManager::get_amount_in_basket() const {
+  int amount = 0;
+  for (int i = 0; i < state->park_creature_amount; i++) {
+    if (state->basket_creatures[i] != 0) {
+      amount++;
+    }
+  }
+  return amount;
 }
 
 bool GameManager::is_in_basket(Entity entity) const {
+  for (int i = 0; i < state->park_creature_amount; i++) {
+    if (state->basket_creatures[i] == entity) {
+      return true;
+    }
+  }
+  return false;
+  /*
   return std::find(
       state->basket_creatures.begin(),
       state->basket_creatures.end(),
       entity)
     != state->basket_creatures.end();
+    */
+}
+
+bool GameManager::try_remove_from_targets(TextureName textureName) {
+  for (int i = 0; i < state->target_creature_amount; i++) {
+    Entity target = state->target_creatures[i];
+    if (target == 0) {
+      continue;
+    }
+
+    if (renderables[target].frames[0] == textureName) {
+      state->target_creatures[i] = 0;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool GameManager::is_in_targets(TextureName textureName) {
+  for (int i = 0; i < state->target_creature_amount; i++) {
+    Entity target = state->target_creatures[i];
+    if (target == 0) {
+      continue;
+    }
+    if (renderables[target].frames[0] == textureName) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int GameManager::get_amount_targets() const {
+  int amount = 0;
+  for (int i = 0; i < state->target_creature_amount; i++) {
+    if (state->target_creatures[i] != 0) {
+      amount++;
+    }
+  }
+  return amount;
 }
 
 void GameManager::update(
@@ -119,12 +218,19 @@ void GameManager::update(
 
     // if In basket
     if (glm::length(pointer_state.pos - (basket_pos + basket_action_offset)) < basket_action_radius) {
-      state->basket_creatures.push_back(state->holding_creature_entity);
+      put_in_basket(state->holding_creature_entity);
       renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
 
       const CreatureComponent &creature = creatures[state->holding_creature_entity];
-      if (creature.category == CreatureCategory::dog)
+      if (creature.category == CreatureCategory::dog) {
         ++state->collected_dogs;
+        TextureName held_texture = renderables[state->holding_creature_entity].frames[0];
+        if (is_in_targets(held_texture)) {
+          if (try_remove_from_targets(held_texture)) {
+            // NOP. Check to end game is below
+          }
+        }
+      }
 
       if (creature.category == CreatureCategory::not_dog)
         ++state->collected_nondogs;
@@ -166,7 +272,7 @@ void GameManager::update(
 
   // Scan basket
   if (state->phase == GamePhase::intro) {
-    if (state->basket_creatures.size() > 0) {
+    if (get_amount_in_basket() > 0) {
       init_park();
       state->phase = GamePhase::park;
     }
@@ -176,13 +282,13 @@ void GameManager::update(
     transforms[state->logo_entity].pos -= glm::vec2(0, 1) * 256.f * delta_time;
     transforms[state->logo_entity].pos.y = std::max(-512.f, transforms[state->logo_entity].pos.y);
 
-    if (state->collected_dogs == state->spawned_dogs_count) {
+    if (get_amount_targets() == 0) {
       init_end();
     }
   }
 
   if (state->phase == GamePhase::end) {
-
+    // TODO: What should happen next?
   }
 }
 
@@ -271,11 +377,25 @@ void GameManager::render(const PointerState &pointer_state) {
     draw_command(render_queue[ri]);
   }
 
+  // Draw all the target entities
+  glm::vec2 target_position_start = glm::vec2(10, 10);
+  glm::vec2 target_position_step = glm::vec2(creature_size.x/2, 0);
+  for(unsigned int i = 0; i < state->target_creature_amount; i++) {
+    Entity target = state->target_creatures[i];
+    if (target == 0) {
+      continue;
+    }
+    RenderableComponent &rendC = renderables[target];
+    TextureName target_texture = rendC.frames[0];
+    glm::vec2 target_position = glm::vec2(target_position_start.x + target_position_step.x * i, target_position_start.y);
+    draw(target_texture, target_position, 1, 1);
+  }
+
   draw(pointer_state.action_held ? TextureName::pointer_down : TextureName::pointer_open, pointer_state.pos - glm::vec2(32, 32));
 
   //GRRLIB_Rectangle(basket_pos.x, basket_pos.y, basket_size.x, basket_size.y, 0xFFFFFFFF, 0);
 
   char score_str[64] = {0};
-  sprintf(score_str, "spawned: %i, dogs: %i, not dogs: %i", state->spawned_dogs_count, state->collected_dogs, state->collected_nondogs );
+  sprintf(score_str, "spawned: %i, dogs: %i, not dogs: %i, targets collected %i", state->spawned_dogs_count, state->collected_dogs, state->collected_nondogs, state->target_creature_amount - get_amount_targets());
   debug_printer.Print(score_str);
 }

@@ -44,10 +44,14 @@ enum RenderLayers : uint8_t {
 struct GameState {
   GamePhase phase = GamePhase::intro;
 
+  static const int park_creature_amount = 30;
+  static const int target_creature_amount = 3;
+
   Entity logo_entity = 0;
 
   Entity holding_creature_entity = 0;
-  std::vector<Entity> basket_creatures;
+  Entity target_creatures[target_creature_amount];
+  Entity basket_creatures[park_creature_amount];
 
   size_t anim_frame_counter = 0;
   double anim_frame_last = 0.f;
@@ -91,6 +95,12 @@ public:
   );
 
   bool is_in_basket(Entity entity) const;
+  void put_in_basket(Entity entity);
+  int get_amount_in_basket() const;
+
+  bool is_in_targets(TextureName textureName);
+  int get_amount_targets() const;
+  bool try_remove_from_targets(TextureName textureName);
 
   void render(const PointerState &pointer_state);
 
@@ -103,6 +113,7 @@ private:
   std::unordered_map<Entity, TransformComponent> transforms;
   std::unordered_map<Entity, CreatureComponent> creatures;
   std::unordered_map<Entity, RenderableComponent> renderables;
+
 
   ResourceManager &resource_manager;
   DebugPrinter &debug_printer;

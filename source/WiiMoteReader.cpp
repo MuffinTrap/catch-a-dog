@@ -4,6 +4,7 @@
 #include <grrlib.h>
 #undef R
 #include <stdlib.h>
+#include <cstdio>
 #include <wiiuse/wpad.h>
 
 #include "grrlib_colors.hpp"

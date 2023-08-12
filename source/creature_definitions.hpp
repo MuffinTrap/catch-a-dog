@@ -5,7 +5,8 @@
 #include "resource_manager.hpp"
 
 enum class CreatureCategory {
-  dog, not_dog
+  not_dog,
+  dog
 };
 
 struct CreatureDefinition {
