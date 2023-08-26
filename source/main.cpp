@@ -13,21 +13,22 @@
 #include <stdlib.h>
 #include <wiiuse/wpad.h>
 
-#include "WiiMoteReader.hpp"
-#include "DebugPrinter.hpp"
-
-#include "game_manager.hpp"
-#include "resource_manager.hpp"
 
 #include <grrlib.h>
 #undef R
 
+#include "WiiMoteReader.hpp"
+#include "DebugPrinter.hpp"
+#include "game_manager.hpp"
+#include "resource_manager.hpp"
 #include "MODPlayer.hpp"
 
 #define GRRLIB_BLACK   0x000000FF
 #define GRRLIB_WHITE   0xFFFFFFFF
 
 int main(int argc, char **argv) {
+
+  srand(time(NULL));
   // Initialise the Graphics & Video subsystem
   GRRLIB_Init();
 
@@ -114,12 +115,15 @@ int main(int argc, char **argv) {
       GRRLIB_Render();  // Render the frame buffer to the TV
     }
     // Main loop ends
+    modplayer.StopPlaying();
 
     debugPrinter.DeInit();
     modplayer.DeInit();
   } // End manager scope
 
   GRRLIB_Exit(); // Be a good boy, clear the memory allocated by GRRLIB
+
+  // StopOgg();
 
   exit(0);  // Use exit() to exit a program, do not use 'return' from main()
 

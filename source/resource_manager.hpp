@@ -6,6 +6,19 @@
 #include <grrlib.h>
 #undef R
 
+#include "sound_effect.hpp"
+
+enum class SoundName : uint32_t
+{
+  bark1,
+  bark2,
+  bark3,
+  bark4,
+  drop,
+  ding,
+  pickup,
+};
+
 enum class TextureName : uint32_t
 {
   test_dog,
@@ -53,6 +66,8 @@ enum class TextureName : uint32_t
   ropedog2_2,
   ropedog3_1,
   ropedog3_2,
+
+  end_screen_font,
 };
 
 class ResourceManager {
@@ -60,7 +75,9 @@ public:
   ResourceManager() {};
   ~ResourceManager();
 
+  Sound_effect &ogg(SoundName sound_name);
   GRRLIB_texImg *tex(TextureName tex_name);
+  GRRLIB_texImg *font(TextureName tex_name, int letter_width, int letter_height);
 
 private:
   std::unordered_map<TextureName, GRRLIB_texImg *> textures_loaded;

@@ -44,7 +44,22 @@
 #include "ropedog3_1_png.h"
 #include "ropedog3_2_png.h"
 
+// End screen font
+#include "BMfont1_png.h"
+
 typedef const uint8_t * TextureData;
+
+/*
+static std::unordered_map<SoundName, Sound_effect> sound_data_map {
+  { SoundName::bark1,   {bark01_ogg, bark01_ogg_size}},
+  { SoundName::bark2,   {bark02_ogg, bark02_ogg_size}},
+  { SoundName::bark3,   {bark03_ogg, bark03_ogg_size}},
+  { SoundName::bark4,   {bark04_ogg, bark04_ogg_size}},
+  { SoundName::drop,    {drop_ogg, drop_ogg_size}},
+  { SoundName::ding,    {ding_ogg, ding_ogg_size}},
+  { SoundName::pickup,  {pickup_ogg, pickup_ogg_size}},
+};
+*/
 
 static std::unordered_map<TextureName, TextureData> texture_data_map {
   { TextureName::test_dog,          test_dog_png },
@@ -90,6 +105,7 @@ static std::unordered_map<TextureName, TextureData> texture_data_map {
   { TextureName::ropedog2_2,        ropedog2_2_png },
   { TextureName::ropedog3_1,        ropedog3_1_png },
   { TextureName::ropedog3_2,        ropedog3_2_png },
+  { TextureName::end_screen_font,   BMfont1_png},
 };
 
 ResourceManager::~ResourceManager() {
@@ -97,7 +113,11 @@ ResourceManager::~ResourceManager() {
     GRRLIB_FreeTexture(texture.second);
   }
 }
-
+/*
+Sound_effect &ResourceManager::ogg(SoundName sound_name) {
+  return sound_data_map.at(sound_name);
+}
+*/
 GRRLIB_texImg *ResourceManager::tex(TextureName tex_name) {
   if (auto found = this->textures_loaded.find(tex_name); found != this->textures_loaded.end()) {
     return (*found).second;
@@ -105,6 +125,20 @@ GRRLIB_texImg *ResourceManager::tex(TextureName tex_name) {
 
   TextureData tex_data = texture_data_map.at(tex_name);
   GRRLIB_texImg *loaded = GRRLIB_LoadTexture(tex_data);
+
+  this->textures_loaded[tex_name] = loaded;
+
+  return loaded;
+}
+
+GRRLIB_texImg *ResourceManager::font(TextureName tex_name, int letter_width, int letter_height) {
+  if (auto found = this->textures_loaded.find(tex_name); found != this->textures_loaded.end()) {
+    return (*found).second;
+  }
+
+  TextureData tex_data = texture_data_map.at(tex_name);
+  GRRLIB_texImg *loaded = GRRLIB_LoadTexture(tex_data);
+  GRRLIB_InitTileSet(loaded, letter_width, letter_height, 32);
 
   this->textures_loaded[tex_name] = loaded;
 

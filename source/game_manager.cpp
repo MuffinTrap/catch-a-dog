@@ -3,9 +3,12 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <algorithm>
+#include <ogc/lwp_watchdog.h>
 
 #include <grrlib.h>
 #undef R
+
+#include "grrlib_colors.hpp"
 
 #include "util.hpp"
 
@@ -20,6 +23,9 @@ GameManager::GameManager(
 }
 
 void GameManager::init_pregame() {
+  // Sound level
+  // SetVolumeOgg(255);
+
   // Logo
   {
     Entity ent = new_entity();
@@ -64,31 +70,37 @@ void GameManager::init_park() {
   // Randomize targets
   do
   {
-    int creature_index = rand() % creatures.size();
-    if (creatures[creature_index].category != CreatureCategory::dog) {
-      continue;
-    }
-
     std::unordered_map<Entity, CreatureComponent>::iterator it = creatures.begin();
+    int creature_index = rand() % creatures.size();
     std::advance(it, creature_index);
     Entity random_entity = it->first;
-    bool is_new = true;
-    for (int i = 0; i < state->target_creature_amount; i++) {
-      if (state->target_creatures[i] == random_entity) {
-        is_new = false;
-        break;
-      }
-    }
 
-    if (is_new) {
-      state->target_creatures[targets_done] = random_entity;
-      targets_done++;
+    const CreatureComponent &creature = creatures[random_entity];
+    if (creature.category == CreatureCategory::dog) {
+      bool is_new = true;
+      for (int i = 0; i < state->target_creature_amount; i++) {
+        if (state->target_creatures[i] == random_entity) {
+          is_new = false;
+          break;
+        }
+      }
+      if (is_new) {
+        state->target_creatures[targets_done] = random_entity;
+        targets_done++;
+      }
     }
   } while (targets_done < state->target_creature_amount);
 }
 
 void GameManager::init_end() {
   transforms[state->logo_entity].pos.y = 32;
+
+  // Load font
+  end_screen_font = resource_manager.font(TextureName::end_screen_font, 32, 32);
+  int logo_bottom = 480 / 2 - 192 + 256;
+  float scale = 1.0f;
+  end_message_transform.angle = scale;
+  end_message_transform.pos = glm::vec2(640/2 + 32 - (8 * 32 * scale) / 2, logo_bottom + 16 );
 
   std::vector<Entity> remove;
   for (auto creatures_pair : creatures) {
@@ -105,8 +117,6 @@ void GameManager::init_end() {
     renderables.erase(ent);
     transforms.erase(ent);
   }
-
-  state->phase = GamePhase::end;
 }
 
 void GameManager::put_in_basket(Entity entity) {
@@ -159,18 +169,6 @@ bool GameManager::try_remove_from_targets(TextureName textureName) {
   return false;
 }
 
-bool GameManager::is_in_targets(TextureName textureName) {
-  for (int i = 0; i < state->target_creature_amount; i++) {
-    Entity target = state->target_creatures[i];
-    if (target == 0) {
-      continue;
-    }
-    if (renderables[target].frames[0] == textureName) {
-      return true;
-    }
-  }
-  return false;
-}
 
 int GameManager::get_amount_targets() const {
   int amount = 0;
@@ -208,6 +206,8 @@ void GameManager::update(
       {
         state->holding_creature_entity = ent;
         renderables[ent].layer = RenderLayer_picked;
+        playfx(SoundName::pickup);
+
         break;
       }
     }
@@ -219,26 +219,25 @@ void GameManager::update(
     // if In basket
     if (glm::length(pointer_state.pos - (basket_pos + basket_action_offset)) < basket_action_radius) {
       put_in_basket(state->holding_creature_entity);
-      renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
 
       const CreatureComponent &creature = creatures[state->holding_creature_entity];
       if (creature.category == CreatureCategory::dog) {
         ++state->collected_dogs;
         TextureName held_texture = renderables[state->holding_creature_entity].frames[0];
-        if (is_in_targets(held_texture)) {
-          if (try_remove_from_targets(held_texture)) {
-            // NOP. Check to end game is below
-          }
+        if (try_remove_from_targets(held_texture)) {
+          // NOP. Check to end game is below
         }
       }
-
-      if (creature.category == CreatureCategory::not_dog)
+      else if (creature.category == CreatureCategory::not_dog) {
         ++state->collected_nondogs;
+      }
+      renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
     }
-
-    // else On ground
-    renderables[state->holding_creature_entity].layer = RenderLayer_basket_in;
+    else {
+      renderables[state->holding_creature_entity].layer = RenderLayer_park;
+    }
     state->holding_creature_entity = 0;
+    playfx(SoundName::drop);
   }
 
   // Move creatures
@@ -277,18 +276,17 @@ void GameManager::update(
       state->phase = GamePhase::park;
     }
   }
-
-  if (state->phase == GamePhase::park) {
+  else if (state->phase == GamePhase::park) {
     transforms[state->logo_entity].pos -= glm::vec2(0, 1) * 256.f * delta_time;
     transforms[state->logo_entity].pos.y = std::max(-512.f, transforms[state->logo_entity].pos.y);
 
     if (get_amount_targets() == 0) {
       init_end();
+      state->phase = GamePhase::end;
     }
   }
-
-  if (state->phase == GamePhase::end) {
-    // TODO: What should happen next?
+  else if (state->phase == GamePhase::end) {
+    // NOP wait for player to quit
   }
 }
 
@@ -315,9 +313,19 @@ Entity GameManager::add_creature_from_definition(const CreatureDefinition &def) 
   return ent;
 }
 
-void GameManager::draw(TextureName tex_name, glm::vec2 pos, int scale_x, int scale_y) {
+void GameManager::draw(TextureName tex_name, glm::vec2 pos, int scale_x, int scale_y, int tint) {
   GRRLIB_texImg *tex = resource_manager.tex(tex_name);
-  GRRLIB_DrawImg(pos.x, pos.y, tex, 0, scale_x, scale_y, 0xFFFFFFFF);
+  GRRLIB_DrawImg(pos.x, pos.y, tex, 0, scale_x, scale_y, tint);
+}
+
+void GameManager::playfx(SoundName sound_name)
+{
+  // TODO did not get this to work
+  // Seems that oggplayer uses ASND and GRRMOD uses AESND
+  // and both can't be used at the same time
+
+  // Sound_effect &fx = resource_manager.ogg(sound_name);
+  // PlayOgg(fx.buffer, fx.len, 0, OGG_ONE_TIME);
 }
 
 struct RenderCommand {
@@ -378,7 +386,7 @@ void GameManager::render(const PointerState &pointer_state) {
   }
 
   // Draw all the target entities
-  glm::vec2 target_position_start = glm::vec2(10, 10);
+  glm::vec2 target_position_start = glm::vec2(creature_size.x/2, creature_size.y/2);
   glm::vec2 target_position_step = glm::vec2(creature_size.x/2, 0);
   for(unsigned int i = 0; i < state->target_creature_amount; i++) {
     Entity target = state->target_creatures[i];
@@ -388,14 +396,27 @@ void GameManager::render(const PointerState &pointer_state) {
     RenderableComponent &rendC = renderables[target];
     TextureName target_texture = rendC.frames[0];
     glm::vec2 target_position = glm::vec2(target_position_start.x + target_position_step.x * i, target_position_start.y);
-    draw(target_texture, target_position, 1, 1);
+    draw(target_texture, target_position, 1, 1, DOG_ROSE);
   }
 
   draw(pointer_state.action_held ? TextureName::pointer_down : TextureName::pointer_open, pointer_state.pos - glm::vec2(32, 32));
 
-  //GRRLIB_Rectangle(basket_pos.x, basket_pos.y, basket_size.x, basket_size.y, 0xFFFFFFFF, 0);
 
+  /*
+  DEBUG CODE
+
+  //GRRLIB_Rectangle(basket_pos.x, basket_pos.y, basket_size.x, basket_size.y, 0xFFFFFFFF, 0);
   char score_str[64] = {0};
   sprintf(score_str, "spawned: %i, dogs: %i, not dogs: %i, targets collected %i", state->spawned_dogs_count, state->collected_dogs, state->collected_nondogs, state->target_creature_amount - get_amount_targets());
   debug_printer.Print(score_str);
+  */
+
+  // Draw end message
+  if (state->phase == GamePhase::end) {
+    int x = end_message_transform.pos.x;
+    int y = end_message_transform.pos.y;
+    GRRLIB_Printf(x, y, end_screen_font, GRRLIB_WHITE, end_message_transform.angle, "SUCCESS!");
+    GRRLIB_Printf(x, y + 34, end_screen_font, GRRLIB_WHITE, end_message_transform.angle, "PRESS HOME");
+    GRRLIB_Printf(x, y + 68, end_screen_font, GRRLIB_WHITE, end_message_transform.angle, "TO QUIT");
+  }
 }

@@ -11,6 +11,7 @@
 #include "entity.hpp"
 #include "creature_definitions.hpp"
 
+
 const glm::vec2 creature_size = glm::vec2(64, 64);
 const glm::vec2 basket_size { 256, 256 };
 const glm::vec2 basket_pos { -16, 480 - basket_size.y + 16 };
@@ -107,14 +108,16 @@ public:
 private:
   Entity add_creature_from_definition(const CreatureDefinition &def);
 
-  void draw(TextureName tex_name, glm::vec2 pos, int scale_x = 1, int scale_y = 1);
+  void draw(TextureName tex_name, glm::vec2 pos, int scale_x = 1, int scale_y = 1, int tint = 0xFFFFFFFF);
+  void playfx(SoundName sound_name);
 
   std::unique_ptr<GameState> state;
   std::unordered_map<Entity, TransformComponent> transforms;
   std::unordered_map<Entity, CreatureComponent> creatures;
   std::unordered_map<Entity, RenderableComponent> renderables;
 
-
+  GRRLIB_texImg *end_screen_font = NULL;
+  TransformComponent end_message_transform;
   ResourceManager &resource_manager;
   DebugPrinter &debug_printer;
 };
